@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inres</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="logo">
+          <img src="icons/icon48.png" alt="" width="34" height="34">
+        </div>
+        <div class="brand-info">
+          <h1>Inres</h1>
+          <span class="badge" id="statusBadge">Active</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="section main-feature">
+      <div class="toggle-card">
+        <div class="toggle-info">
+          <div class="toggle-title-row">
+            <span class="icon-wrap">↻</span>
+            <span class="toggle-title">Auto-scroll Reels</span>
+          </div>
+          <p class="toggle-desc">Automatically move to the next Reel when the current one ends</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoNextToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="toggle-card">
+        <div class="toggle-info">
+          <div class="toggle-title-row">
+            <span class="icon-wrap">⛶</span>
+            <span class="toggle-title">Auto Picture-in-Picture</span>
+          </div>
+          <p class="toggle-desc">Automatically switch to PiP when switching tabs</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoPipToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-card">
+        <div class="toggle-info">
+          <div class="toggle-title-row">
+            <span class="icon-wrap">🔊</span>
+            <span class="toggle-title">Background Audio</span>
+          </div>
+          <p class="toggle-desc">Keep audio playing when switching apps &amp; tabs</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="keepPlayingToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-card">
+        <div class="toggle-info">
+          <div class="toggle-title-row">
+            <span class="icon-wrap">⚡</span>
+            <span class="toggle-title">Translucent Scrubber</span>
+          </div>
+          <p class="toggle-desc">Modern glassmorphic progress bar on every Reel</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="controlsToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-card">
+        <div class="toggle-info">
+          <div class="toggle-title-row">
+            <span class="icon-wrap">⏩</span>
+            <span class="toggle-title">Hold to 2× Speed</span>
+          </div>
+          <p class="toggle-desc">Press and hold on the Reel to temporarily speed up to 2×</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="holdTo2xToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section preferences">
+      <div class="pref-row">
+        <span class="pref-label">Playback Speed</span>
+        <div class="speed-selector" id="speedSelector">
+          <button class="speed-chip" data-speed="0.5">0.5×</button>
+          <button class="speed-chip" data-speed="1">1×</button>
+          <button class="speed-chip" data-speed="1.25">1.25×</button>
+          <button class="speed-chip" data-speed="1.5">1.5×</button>
+          <button class="speed-chip" data-speed="2">2×</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section experimental">
+      <div class="section-title">Experimental</div>
+      <p class="toggle-desc">More to come</p>
+    </div>
+
+    <footer class="footer">
+      <span>Inres</span>
+      <span class="footer-dot">•</span>
+      <span>v7.0.1</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
