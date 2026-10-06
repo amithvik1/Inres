@@ -8,11 +8,13 @@
     keepPlaying: true,
     controls: true,
     speed: 1,
-    holdTo2x: true
+    holdTo2x: true,
+    collapsed: false
   };
   const root = document.documentElement;
 
   let settings = { ...DEFAULTS };
+  let isCollapsed = false;
   let activeVideo = null;
   let pipVideo = null;
 
@@ -62,6 +64,17 @@
 
   const setSettings = (next) => {
     settings = { ...DEFAULTS, ...next };
+    isCollapsed = Boolean(settings.collapsed);
+    if (controls) {
+      if (isCollapsed) {
+        controls.classList.add("re-collapsed");
+        controls.classList.add("re-visible");
+      } else {
+        controls.classList.remove("re-collapsed");
+      }
+      lastLayout = "";
+      positionControls();
+    }
     syncSettingsToPage();
     applyToVideos();
   };
@@ -170,13 +183,41 @@
 
   // ---- seek bar / controls ----
 
+  function collapseControls() {
+    isCollapsed = true;
+    settings.collapsed = true;
+    chrome.storage?.local?.set({ [STORAGE_KEY]: settings }).catch(() => {});
+    if (controls) {
+      controls.classList.add("re-collapsed");
+      controls.classList.add("re-visible");
+    }
+    lastLayout = "";
+    positionControls();
+  }
+
+  function expandControls() {
+    isCollapsed = false;
+    settings.collapsed = false;
+    chrome.storage?.local?.set({ [STORAGE_KEY]: settings }).catch(() => {});
+    if (controls) {
+      controls.classList.remove("re-collapsed");
+      controls.classList.add("re-visible");
+    }
+    lastLayout = "";
+    positionControls();
+    updateProgress();
+  }
+
   function createControls() {
     if (controls) return;
 
     controls = document.createElement("div");
-    controls.className = "re-reel-controls";
+    controls.className = "re-reel-controls" + (isCollapsed ? " re-collapsed re-visible" : "");
 
     controls.innerHTML = `
+      <button class="re-btn-expand" aria-label="Expand player bar" title="Expand player bar">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
       <button class="re-icon-btn re-btn-play" aria-label="Play/Pause">${playIcon}</button>
       <div class="re-progress-container">
         <div class="re-progress-row">
@@ -190,6 +231,9 @@
         <span class="re-time-sep">/</span>
         <span class="re-dur-time">0:00</span>
       </div>
+      <button class="re-btn-collapse" aria-label="Collapse player bar" title="Collapse player bar">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
     `;
 
     root.appendChild(controls);
@@ -200,9 +244,28 @@
     timeLabel = controls.querySelector(".re-time-label");
     curTimeSpan = controls.querySelector(".re-cur-time");
     durTimeSpan = controls.querySelector(".re-dur-time");
+    const btnCollapse = controls.querySelector(".re-btn-collapse");
+    const btnExpand = controls.querySelector(".re-btn-expand");
 
     ["mousedown", "mouseup", "click", "dblclick", "pointerdown", "pointerup"].forEach((evt) => {
       controls.addEventListener(evt, (e) => e.stopPropagation());
+    });
+
+    btnCollapse.addEventListener("click", (e) => {
+      e.stopPropagation();
+      collapseControls();
+    });
+
+    btnExpand.addEventListener("click", (e) => {
+      e.stopPropagation();
+      expandControls();
+    });
+
+    controls.addEventListener("click", (e) => {
+      if (isCollapsed) {
+        e.stopPropagation();
+        expandControls();
+      }
     });
 
     const startSeek = (e) => {
@@ -328,8 +391,21 @@
     }
 
     const left = Math.round(r.left + 12);
-    const width = Math.round(r.width - 60);
     const bottom = Math.max(10, Math.round(innerHeight - r.bottom + 12));
+
+    if (isCollapsed) {
+      const layout = `${left}|collapsed|${bottom}`;
+      if (layout !== lastLayout || controls.style.display !== "flex") {
+        lastLayout = layout;
+        controls.style.display = "flex";
+        controls.style.left = `${left}px`;
+        controls.style.width = "28px";
+        controls.style.bottom = `${bottom}px`;
+      }
+      return;
+    }
+
+    const width = Math.round(r.width - 60);
     const layout = `${left}|${width}|${bottom}`;
     if (layout !== lastLayout || controls.style.display !== "flex") {
       lastLayout = layout;
@@ -395,7 +471,13 @@
     }
 
     createControls();
-    if (changed && activeVideo) updateProgress();
+    if (isCollapsed) {
+      controls.classList.add("re-collapsed");
+      controls.classList.add("re-visible");
+    } else {
+      controls.classList.remove("re-collapsed");
+      if (changed && activeVideo) updateProgress();
+    }
     positionControls();
   }
 
@@ -409,6 +491,7 @@
 
   function handleMouse() {
     mouseQueued = false;
+    if (isCollapsed) return;
     const e = lastMouse;
     if (!e || !controls || !isReelsPage() || !settings.controls) return;
 

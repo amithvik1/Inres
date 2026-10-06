@@ -9,7 +9,8 @@
     keepPlaying: true,
     controls: true,
     speed: 1,
-    holdTo2x: true
+    holdTo2x: true,
+    collapsed: false
   };
 
   let settings = { ...DEFAULTS };
@@ -19,6 +20,7 @@
   const keepPlayingToggle = document.getElementById("keepPlayingToggle");
   const controlsToggle = document.getElementById("controlsToggle");
   const holdTo2xToggle = document.getElementById("holdTo2xToggle");
+  const collapsedToggle = document.getElementById("collapsedToggle");
   const speedSelector = document.getElementById("speedSelector");
   const statusBadge = document.getElementById("statusBadge");
 
@@ -42,6 +44,10 @@
 
     if (holdTo2xToggle) {
       holdTo2xToggle.checked = Boolean(settings.holdTo2x);
+    }
+
+    if (collapsedToggle) {
+      collapsedToggle.checked = Boolean(settings.collapsed);
     }
 
     const speedChips = speedSelector.querySelectorAll(".speed-chip");
@@ -105,6 +111,13 @@
   if (holdTo2xToggle) {
     holdTo2xToggle.addEventListener("change", () => {
       settings.holdTo2x = holdTo2xToggle.checked;
+      saveSettings();
+    });
+  }
+
+  if (collapsedToggle) {
+    collapsedToggle.addEventListener("change", () => {
+      settings.collapsed = collapsedToggle.checked;
       saveSettings();
     });
   }

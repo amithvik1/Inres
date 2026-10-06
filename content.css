@@ -190,6 +190,100 @@
   font-size: 9px !important;
 }
 
+/* Collapse and Expand buttons */
+.re-btn-collapse {
+  border: none !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  padding: 0 !important;
+  margin-left: 2px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  outline: none !important;
+  flex-shrink: 0 !important;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease !important;
+}
+
+.re-btn-collapse:hover {
+  background: rgba(89, 214, 132, 0.25) !important;
+  color: #59D684 !important;
+  transform: scale(1.1) !important;
+}
+
+.re-btn-collapse svg {
+  width: 9px !important;
+  height: 9px !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+.re-btn-expand {
+  display: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  color: #59D684 !important;
+  cursor: pointer !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  outline: none !important;
+  border-radius: 50% !important;
+}
+
+.re-btn-expand svg {
+  width: 13px !important;
+  height: 13px !important;
+  stroke: #59D684 !important;
+  fill: none !important;
+}
+
+/* Collapsed circle mode */
+.re-reel-controls.re-collapsed {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0.78 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  background: rgba(10, 10, 12, 0.85) !important;
+  border: 1px solid rgba(89, 214, 132, 0.45) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45), 0 0 8px rgba(89, 214, 132, 0.25) !important;
+  transform: translateY(0) !important;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.re-reel-controls.re-collapsed:hover {
+  opacity: 1 !important;
+  transform: scale(1.12) !important;
+  border-color: rgba(89, 214, 132, 0.9) !important;
+  background: rgba(10, 10, 12, 0.95) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55), 0 0 12px rgba(89, 214, 132, 0.45) !important;
+}
+
+.re-reel-controls.re-collapsed .re-btn-expand {
+  display: flex !important;
+}
+
+.re-reel-controls.re-collapsed .re-btn-play,
+.re-reel-controls.re-collapsed .re-progress-container,
+.re-reel-controls.re-collapsed .re-time-label,
+.re-reel-controls.re-collapsed .re-btn-collapse {
+  display: none !important;
+}
+
 .re-speed-badge {
   position: fixed !important;
   z-index: 2147483647 !important;
