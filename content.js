@@ -35,6 +35,12 @@
   let tickQueued = false;
   let lastMouse = null;
   let mouseQueued = false;
+  let isScrolling = false;
+  let scrollTimeout = null;
+  let wheelAccum = 0;
+  let wheelResetTimer = null;
+  let forwardLockUntil = 0;
+  const SCROLL_SETTLE_MS = 160;
 
   // last values written to the controls, so unchanged values don't touch the DOM
   let lastPct = -1;
@@ -160,6 +166,13 @@
     lastScrollVideo = video;
     lastScrollTime = now;
 
+    stepReel(video, 1);
+  }
+
+  // Moves one reel forward (dir > 0) or back (dir < 0).
+  function stepReel(video, dir) {
+    if (!video || !isReelsPage()) return;
+
     const currentCard = findReelCard(video);
     const articles = [...document.querySelectorAll("article, [role='presentation']")].filter((a) => {
       const r = a.getBoundingClientRect();
@@ -168,17 +181,24 @@
 
     if (currentCard) {
       const cr = currentCard.getBoundingClientRect();
-      const next = articles
-        .filter((a) => a !== currentCard && a.getBoundingClientRect().top > cr.top + 50)
-        .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)[0];
+      const target = articles
+        .filter((a) => {
+          if (a === currentCard) return false;
+          const top = a.getBoundingClientRect().top;
+          return dir > 0 ? top > cr.top + 50 : top < cr.top - 50;
+        })
+        .sort((a, b) => {
+          const d = a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+          return dir > 0 ? d : -d;
+        })[0];
 
-      if (next) {
-        next.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
     }
 
-    window.scrollBy({ top: Math.max(innerHeight * 0.85, 450), behavior: "smooth" });
+    window.scrollBy({ top: dir * Math.max(innerHeight * 0.85, 450), behavior: "smooth" });
   }
 
   // ---- seek bar / controls ----
@@ -250,6 +270,10 @@
     ["mousedown", "mouseup", "click", "dblclick", "pointerdown", "pointerup"].forEach((evt) => {
       controls.addEventListener(evt, (e) => e.stopPropagation());
     });
+
+    // The bar sits on top of Instagram's scroller, so wheel events over it never reach
+    // the page. Catch them here and step to the next/previous reel instead.
+    controls.addEventListener("wheel", onControlsWheel, { passive: false });
 
     btnCollapse.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -330,6 +354,23 @@
     });
   }
 
+  function onControlsWheel(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.ctrlKey || !activeVideo) return;
+
+    wheelAccum += e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    clearTimeout(wheelResetTimer);
+    wheelResetTimer = setTimeout(() => { wheelAccum = 0; }, 200);
+
+    if (Math.abs(wheelAccum) < 40) return;
+
+    const dir = wheelAccum > 0 ? 1 : -1;
+    wheelAccum = 0;
+    forwardLockUntil = Date.now() + 700; // swallow trackpad momentum so we move one reel only
+    stepReel(activeVideo, dir);
+  }
+
   function resetProgressCache() {
     lastPct = -1;
     lastCur = "";
@@ -371,7 +412,10 @@
   }
 
   function hideControls() {
-    if (controls && controls.style.display !== "none") controls.style.display = "none";
+    lastLayout = "";
+    if (controls && controls.style.display !== "none") {
+      controls.style.display = "none";
+    }
   }
 
   function positionControls() {
@@ -380,6 +424,9 @@
       hideControls();
       return;
     }
+
+    // Hold still while the bar is fading out; it re-places itself once scrolling settles.
+    if (isScrolling && controls.style.display === "flex") return;
 
     const r = activeVideo.getBoundingClientRect();
     if (
@@ -392,28 +439,27 @@
 
     const left = Math.round(r.left + 12);
     const bottom = Math.max(10, Math.round(innerHeight - r.bottom + 12));
+    const width = Math.round(r.width - 60);
 
+    let layout, displayWidth;
     if (isCollapsed) {
-      const layout = `${left}|collapsed|${bottom}`;
-      if (layout !== lastLayout || controls.style.display !== "flex") {
-        lastLayout = layout;
-        controls.style.display = "flex";
-        controls.style.left = `${left}px`;
-        controls.style.width = "28px";
-        controls.style.bottom = `${bottom}px`;
-      }
+      layout = `${left}|C|${bottom}`;
+      displayWidth = "28px";
+    } else {
+      layout = `${left}|${width}|${bottom}`;
+      displayWidth = `${width}px`;
+    }
+
+    // Only update DOM if layout actually changed
+    if (layout === lastLayout && controls.style.display === "flex") {
       return;
     }
 
-    const width = Math.round(r.width - 60);
-    const layout = `${left}|${width}|${bottom}`;
-    if (layout !== lastLayout || controls.style.display !== "flex") {
-      lastLayout = layout;
-      controls.style.display = "flex";
-      controls.style.left = `${left}px`;
-      controls.style.width = `${width}px`;
-      controls.style.bottom = `${bottom}px`;
-    }
+    lastLayout = layout;
+    controls.style.display = "flex";
+    controls.style.left = `${left}px`;
+    controls.style.width = displayWidth;
+    controls.style.bottom = `${bottom}px`;
   }
 
   // ---- per-video events ----
@@ -748,7 +794,48 @@
     scheduleTick();
   }).observe(root, { childList: true, subtree: true });
 
-  window.addEventListener("scroll", scheduleTick, { passive: true });
+  // ---- fade the bar while scrolling between reels ----
+
+  function markScrolling() {
+    if (!controls || !isReelsPage()) return;
+    isScrolling = true;
+    controls.classList.add("re-scrolling");
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(endScrolling, SCROLL_SETTLE_MS);
+  }
+
+  function endScrolling() {
+    isScrolling = false;
+    if (!controls) return;
+    tick();         // pick the new active reel and re-place the bar while it is still invisible
+    handleMouse();  // re-evaluate whether it should show for the current mouse position
+    controls.classList.remove("re-scrolling"); // then fade in smoothly
+  }
+
+  // Capture phase: Instagram scrolls an inner container, and scroll events don't bubble.
+  document.addEventListener(
+    "scroll",
+    (e) => {
+      const t = e.target;
+      const isMain = t === document;
+      const isReelScroller = t instanceof Element && (!activeVideo || t.contains(activeVideo));
+      if (isMain || isReelScroller) markScrolling();
+    },
+    { capture: true, passive: true }
+  );
+
+  // After a wheel over the bar was forwarded, drop the rest of that wheel burst.
+  window.addEventListener(
+    "wheel",
+    (e) => {
+      if (Date.now() < forwardLockUntil) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+    { capture: true, passive: false }
+  );
+
   window.addEventListener("resize", scheduleTick, { passive: true });
   window.addEventListener("popstate", scheduleTick);
 

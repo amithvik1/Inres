@@ -19,13 +19,38 @@
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translateY(6px) !important;
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform, opacity !important;
 }
 
 .re-reel-controls.re-visible {
   opacity: 1 !important;
   pointer-events: auto !important;
   transform: translateY(0) !important;
+}
+
+.re-reel-controls.re-scrolling {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(0) !important;
+  transition: opacity 0.12s ease-out !important;
+}
+
+.re-reel-controls .re-progress-row,
+.re-reel-controls .re-progress-container,
+.re-reel-controls .re-progress,
+.re-reel-controls .re-progress-track,
+.re-reel-controls .re-progress-bg {
+  pointer-events: auto !important;
+}
+
+.re-reel-controls .re-progress-row {
+  pointer-events: auto !important;
+}
+
+.re-reel-controls .re-progress {
+  pointer-events: auto !important;
+  touch-action: none !important;
 }
 
 .re-icon-btn {
@@ -318,4 +343,12 @@
   width: 13px !important;
   height: 13px !important;
   fill: currentColor !important;
+}
+
+/* Collapsed circle also fades while scrolling (must come after the collapsed rules) */
+.re-reel-controls.re-collapsed.re-scrolling {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(0) !important;
+  transition: opacity 0.12s ease-out !important;
 }
